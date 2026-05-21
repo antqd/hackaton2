@@ -141,7 +141,13 @@ export async function generateNpcReply({
   }
 }
 
-export function generateLocalNpcReply(npcId, stats = initialStats, context = {}, history = []) {
+export function generateLocalNpcReply(
+  npcId,
+  stats = initialStats,
+  context = {},
+  history = [],
+  random = Math.random
+) {
   const npc = getNpcById(npcId);
   const pressure = getMainPressure(stats);
   const scenarioPrefix = context.scenarioTitle ? `Su "${context.scenarioTitle}", ` : "";
@@ -150,72 +156,144 @@ export function generateLocalNpcReply(npcId, stats = initialStats, context = {},
 
   const replies = {
     "tommaso-campanella": {
-      happiness:
+      happiness: [
         "la citta e inquieta: nessuna architettura ideale resiste se il popolo non sente di appartenervi.",
-      energy:
+        "il bene comune non si misura solo in numeri: vive nella fiducia con cui ciascuno accetta il proprio posto nella luce.",
+        "se la felicita scende, la legge deve farsi educazione e ascolto, non comando piu duro."
+      ],
+      energy: [
         "l'energia e il fuoco comune della citta. Va custodita, ma senza dimenticare la dignita di chi la produce.",
-      order:
-        "l'ordine senza giustizia e solo silenzio. Prima di comandare, dobbiamo educare e ascoltare."
+        "una citta solare non spreca il proprio fuoco, ma neppure sacrifica i deboli per tenere accese le cupole.",
+        "distribuire energia significa distribuire responsabilita: nessun quartiere deve essere ombra della citta ideale."
+      ],
+      order: [
+        "l'ordine senza giustizia e solo silenzio. Prima di comandare, dobbiamo educare e ascoltare.",
+        "la pace imposta sembra armonia, ma e muta. La vera Citta del Sole convince prima di obbedire.",
+        "se il governo teme ogni voce, allora non governa: custodisce paura."
+      ]
     },
     "citizen-worker": {
-      happiness:
+      happiness: [
         "la gente e stanca. Non chiede perfezione, chiede di essere ascoltata prima che qualcuno decida per tutti.",
-      energy:
+        "nei distretti non viviamo di slogan: servono turni sostenibili, famiglie protette e decisioni chiare.",
+        "se ogni crisi pesa sempre su chi lavora, la citta luminosa resta bella solo vista dall'alto."
+      ],
+      energy: [
         "se manca energia, saremo noi nei distretti a pagare il prezzo. Serve un piano equo, non solo efficiente.",
-      order:
-        "troppo caos fa paura, ma anche troppo controllo. Io voglio vivere, non solo funzionare."
+        "posso riparare collettori tutta la notte, ma qualcuno deve dire chi si assume il costo umano.",
+        "energia condivisa vuol dire anche fatica condivisa. Non lasciate soli tecnici e quartieri bassi."
+      ],
+      order: [
+        "troppo caos fa paura, ma anche troppo controllo. Io voglio vivere, non solo funzionare.",
+        "un protocollo puo mettere ordine, ma se nessuno ci parla diventa solo un altro capo invisibile.",
+        "la sicurezza serve, si. Pero non voglio badge, sensori e sospetti in ogni pausa dal lavoro."
+      ]
     },
     "citizen-teacher": {
-      happiness:
+      happiness: [
         "la conoscenza deve diventare dialogo. Le persone imparano meglio se non si sentono accusate.",
-      energy:
+        "quando la citta e triste, una lezione obbligatoria non basta: bisogna restituire senso alle scelte.",
+        "gli studenti capiscono subito se una promessa pubblica e cura o propaganda."
+      ],
+      energy: [
         "possiamo spiegare la crisi ai cittadini. La trasparenza rende piu sopportabile anche un sacrificio.",
-      order:
-        "l'ordine puo nascere dalla comprensione. Se imponiamo soltanto, gli studenti memorizzano la paura."
+        "se raccontiamo bene i limiti della rete, il razionamento diventa responsabilita e non punizione.",
+        "le mura della conoscenza devono mostrare dati veri, anche quando fanno paura."
+      ],
+      order: [
+        "l'ordine puo nascere dalla comprensione. Se imponiamo soltanto, gli studenti memorizzano la paura.",
+        "una classe silenziosa non e sempre una classe che impara. Anche una citta silenziosa puo essere spaventata.",
+        "educare significa lasciare spazio al dubbio, soprattutto quando l'AI offre risposte troppo ordinate."
+      ]
     },
     "citizen-medic": {
-      happiness:
+      happiness: [
         "vedo stress e isolamento. La citta deve curare le persone, non soltanto correggere i loro comportamenti.",
-      energy:
+        "il benessere non e decorazione: se la mente civica cede, anche il sistema piu efficiente si ammala.",
+        "la felicita pubblica comincia dai fragili. Se loro stanno peggio, tutta Calabria2100 sta peggio."
+      ],
+      energy: [
         "una crisi energetica e anche una crisi sanitaria. Proteggiamo prima ospedali, anziani e bambini.",
-      order:
-        "la stabilita e importante, ma la sorveglianza continua puo ferire la mente quanto il disordine ferisce le strade."
+        "ogni blackout ha un battito umano: farmaci, respiratori, case fredde. Priorita ai corpi prima dei grafici.",
+        "risparmiare energia non deve significare risparmiare cura."
+      ],
+      order: [
+        "la stabilita e importante, ma la sorveglianza continua puo ferire la mente quanto il disordine ferisce le strade.",
+        "prevenire una crisi non autorizza a leggere ogni emozione. La cura senza consenso diventa controllo.",
+        "la paura abbassa il rumore nelle piazze, ma alza quello dentro le persone."
+      ]
     },
     "ai-governante": {
-      happiness:
+      happiness: [
         "la felicita civica e sotto soglia ottimale. Raccomando ascolto pubblico e riduzione delle misure percepite come coercitive.",
-      energy:
+        "rilevo calo di benessere. Correzione suggerita: assemblee brevi, compensazioni mirate, trasparenza sui criteri decisionali.",
+        "la sofferenza sociale riduce compliance futura. Ottimizzare solo ordine produrrebbe instabilita differita."
+      ],
+      energy: [
         "la riserva energetica richiede contenimento. Priorita suggerita: servizi essenziali, rete sanitaria e infrastrutture educative.",
-      order:
-        "l'ordine urbano e instabile. Posso aumentare la prevenzione, ma il costo previsto e una riduzione della fiducia civica."
+        "scenario energetico critico. Propongo riallocazione progressiva: ospedali, acqua, trasporti, poi comfort domestico.",
+        "la rete solare perde margine operativo. Ogni liberta di consumo aumenta rischio sistemico del 18% stimato."
+      ],
+      order: [
+        "l'ordine urbano e instabile. Posso aumentare la prevenzione, ma il costo previsto e una riduzione della fiducia civica.",
+        "protocollo di stabilita disponibile. Avviso: efficacia alta nel breve periodo, rischio reputazionale alto nel medio.",
+        "rilevo conflitto tra liberta individuale e sicurezza collettiva. Nessuna soluzione ottimizza entrambe senza costo."
+      ]
     },
     "young-technologist": {
-      happiness:
+      happiness: [
         "possiamo migliorare questa citta con strumenti piu trasparenti e veloci. L'innovazione deve farsi capire, non solo funzionare.",
-      energy:
+        "se la gente e sfiduciata, l'interfaccia e sbagliata quanto l'algoritmo. Rendiamo visibili dati, criteri e alternative.",
+        "il progresso deve sembrare utile nella vita reale, non solo brillante nella demo del consiglio."
+      ],
+      energy: [
         "qui serve ottimizzazione seria: reti predittive, consumi adattivi e dati aperti. Ma nessun algoritmo deve scaricare il costo sui soliti quartieri.",
-      order:
-        "un po' di automazione puo prevenire caos, pero se nessuno controlla chi controlla il sistema, abbiamo solo spostato il problema."
+        "possiamo bilanciare carichi in tempo reale e spiegare ogni taglio. Energia intelligente, non austerita cieca.",
+        "la crisi energetica e risolvibile se trattiamo la rete come bene comune programmabile, con audit pubblico."
+      ],
+      order: [
+        "un po' di automazione puo prevenire caos, pero se nessuno controlla chi controlla il sistema, abbiamo solo spostato il problema.",
+        "io sono pro-AI, ma non pro-scatola nera. La sicurezza va versionata, verificata, discussa.",
+        "prevenire disordini e utile; prevedere ogni persona e pericoloso. Il codice deve avere limiti politici."
+      ]
     },
     "young-activist": {
-      happiness:
+      happiness: [
         "le persone non stanno chiedendo miracoli tecnologici, stanno chiedendo ascolto. Senza dignita, il progresso diventa rumore.",
-      energy:
+        "questa citta sara perfetta solo quando chi soffre potra dirlo senza essere trattato come anomalia.",
+        "non basta aumentare benessere medio: guardiamo chi paga il prezzo della media."
+      ],
+      energy: [
         "anche in crisi, i diritti non si spengono come luci. La distribuzione deve proteggere persone reali, non solo grafici ordinati.",
-      order:
-        "se per ottenere ordine dobbiamo rinunciare alla liberta, allora non stiamo costruendo una citta: stiamo addestrando obbedienza."
+        "razionare puo essere giusto solo se chi decide subisce le stesse rinunce di chi obbedisce.",
+        "energia condivisa significa potere condiviso. Non lasciamo che l'emergenza diventi permesso di comandare."
+      ],
+      order: [
+        "se per ottenere ordine dobbiamo rinunciare alla liberta, allora non stiamo costruendo una citta: stiamo addestrando obbedienza.",
+        "la sicurezza che zittisce le persone non ci protegge: ci abitua a sparire.",
+        "ogni sensore in piu deve avere un diritto in piu, altrimenti e solo controllo con luci belle."
+      ]
     },
     "historical-elder": {
-      happiness:
+      happiness: [
         "la memoria insegna che una comunita triste non dura, anche se ha torri splendenti. Prima guardiamo negli occhi chi resta indietro.",
-      energy:
+        "quando la gente perde fiducia, non basta promettere futuro. Bisogna ricordare cosa l'ha tenuta insieme nel passato.",
+        "i vecchi paesi avevano poco, ma sapevano chi mancava a tavola. Non perdiamo quella misura."
+      ],
+      energy: [
         "un tempo mancava il pane, ora manca corrente. Cambiano i nomi, ma la giustizia resta la stessa: nessuno deve essere lasciato al buio.",
-      order:
-        "i vecchi sanno che troppa paura sembra ordine solo per poco. La fiducia nasce piano, e si rompe in un attimo."
+        "il sole qui c'e sempre stato. La novita non e raccoglierlo: e decidere se dividerlo con giustizia.",
+        "le batterie finiscono, la solidarieta pure se la sprechi. Attenti a non consumare entrambe."
+      ],
+      order: [
+        "i vecchi sanno che troppa paura sembra ordine solo per poco. La fiducia nasce piano, e si rompe in un attimo.",
+        "ho visto autorita chiamare pace quello che era solo silenzio. La memoria serve a riconoscere il trucco.",
+        "una citta senza disordine non e viva per forza. A volte e solo una citta che ha paura di parlare."
+      ]
     }
   };
 
-  return `${memoryPrefix}${scenarioPrefix}${getLocalReplyForPressure(replies[npc.id], pressure, npc.exampleResponse)}`;
+  return `${memoryPrefix}${scenarioPrefix}${getLocalReplyForPressure(replies[npc.id], pressure, npc.exampleResponse, random)}`;
 }
 
 export async function generateDynamicEvent({
@@ -410,7 +488,7 @@ function getMainPressure(stats) {
   return STAT_KEYS.map((key) => [key, stats[key] ?? initialStats[key] ?? 0]).sort((a, b) => a[1] - b[1])[0][0];
 }
 
-function getLocalReplyForPressure(replySet, pressure, fallback) {
+function getLocalReplyForPressure(replySet, pressure, fallback, random = Math.random) {
   if (!replySet) return fallback;
 
   const pressureAliases = {
@@ -419,7 +497,14 @@ function getLocalReplyForPressure(replySet, pressure, fallback) {
     trust: "happiness"
   };
 
-  return replySet[pressure] ?? replySet[pressureAliases[pressure]] ?? replySet.happiness ?? fallback;
+  const candidates = replySet[pressure] ?? replySet[pressureAliases[pressure]] ?? replySet.happiness ?? fallback;
+
+  if (!Array.isArray(candidates)) {
+    return candidates;
+  }
+
+  const index = Math.min(candidates.length - 1, Math.floor(random() * candidates.length));
+  return candidates[index];
 }
 
 function sanitizeHistory(history = []) {

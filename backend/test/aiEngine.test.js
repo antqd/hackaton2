@@ -48,6 +48,36 @@ test("storytelling NPCs have distinct prompt profiles and local voices", () => {
   assert.match(elderReply, /memoria|fiducia|vecchi/i);
 });
 
+test("local NPC fallback rotates coherent replies per character and pressure", () => {
+  const stats = { ...initialStats, freedom: 20 };
+  const first = generateLocalNpcReply(
+    "young-activist",
+    stats,
+    { scenarioTitle: "Sorveglianza totale" },
+    [],
+    () => 0
+  );
+  const second = generateLocalNpcReply(
+    "young-activist",
+    stats,
+    { scenarioTitle: "Sorveglianza totale" },
+    [],
+    () => 0.9
+  );
+  const governor = generateLocalNpcReply(
+    "ai-governante",
+    { ...initialStats, order: 20 },
+    { scenarioTitle: "Sorveglianza totale" },
+    [],
+    () => 0
+  );
+
+  assert.notEqual(first, second);
+  assert.match(first, /liberta|diritti?|persone|obbedienza|controllo/i);
+  assert.match(second, /liberta|diritti?|persone|obbedienza|controllo/i);
+  assert.match(governor, /protocollo|rischio|ordine|stabilita/i);
+});
+
 test("scenarios expose two playable choices", () => {
   assert.equal(scenarios.length, 4);
 

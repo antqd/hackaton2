@@ -130,6 +130,13 @@ const npcReplies = [
     statShift: { happiness: -1, energy: 2, order: 5 },
   },
   {
+    sender: 'Tommaso Campanella',
+    tone: 'philosophy',
+    text: 'Nella Citta del Sole, il sapere non deve diventare catena. Se l AI governa senza educare il popolo, la luce diventa dominio.',
+    consequence: 'Campanella richiama la citta al bene comune e alla conoscenza condivisa.',
+    statShift: { happiness: 5, energy: -1, order: -2 },
+  },
+  {
     sender: 'Young Activist',
     tone: 'freedom',
     text: 'Non basta una citta efficiente. Se ogni scelta viene prevista, corretta e filtrata, allora non siamo cittadini: siamo output.',
@@ -206,14 +213,14 @@ const npcReplies = [
     consequence: 'La fiducia popolare aumenta, ma il controllo centrale perde precisione.',
     statShift: { happiness: 5, energy: -1, order: -3 },
   },
-  {
-    sender: 'Simona',
-    tone: 'guide',
-    text: 'Sono Simona. Questa citta sembra perfetta da lontano, ma ogni strada ha una scelta politica nascosta. Seguimi verso la piazza solare: Campanella AI sta parlando.',
-    consequence: 'Simona apre un percorso narrativo nella citta e aumenta curiosita sociale.',
-    statShift: { happiness: 4, energy: 0, order: -1 },
-  },
 ]
+
+const visibleNpcFallbacks = {
+  'ai governante': 'AI Governante',
+  'young activist': 'Young Activist',
+  'tommaso campanella': 'Tommaso Campanella',
+  'young technologist': 'Young Technologist',
+}
 
 const decisionConsequences = [
   'La decisione viene assorbita dalla rete civica. Le piazze cambiano colore mentre gli algoritmi ricalibrano fiducia, energia e ordine.',
@@ -255,11 +262,13 @@ export function getDecisionConsequence(decision, stats) {
 }
 
 export function createNpcReply(message, scenario, stats) {
-  const text = message.toLowerCase()
+  const text = normalize(message)
+  const visibleSender = visibleNpcFallbacks[text]
   const targeted =
-    npcReplies.find((reply) => text.includes(reply.sender.toLowerCase())) ??
+    npcReplies.find((reply) => reply.sender === visibleSender) ??
+    npcReplies.find((reply) => normalize(reply.sender) === text) ??
     npcReplies.find((reply) => scenario.description.toLowerCase().includes(reply.sender.toLowerCase())) ??
-    sample(npcReplies)
+    npcReplies.find((reply) => reply.sender === 'AI Governante')
 
   const intensity = stats.order > 80 ? ' Il protocollo di ordine resta dominante.' : ''
 
@@ -283,4 +292,8 @@ function randomDelta() {
 
 function sample(items) {
   return items[Math.floor(Math.random() * items.length)]
+}
+
+function normalize(value) {
+  return String(value ?? '').trim().toLowerCase()
 }

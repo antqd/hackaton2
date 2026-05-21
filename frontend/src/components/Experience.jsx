@@ -352,12 +352,14 @@ function Hotspot({ active, focused, hotspot, onActivate, registerRef }) {
         <ringGeometry args={[0.68, 0.74, 40]} />
         <meshStandardMaterial color={hotspot.color} emissive={hotspot.color} emissiveIntensity={near ? 1.6 : 0.9} transparent opacity={near ? 0.82 : 0.45} />
       </mesh>
-      <Html center distanceFactor={8} position={[0.5, 0.5, 0]}>
-        <div className={`world-label ${active || focused || near ? 'active' : ''}`}>
-          {hotspot.name}
-          <span>Premi E per comunicare</span>
-        </div>
-      </Html>
+      {!active && (
+        <Html center distanceFactor={8} position={[0.5, 0.5, 0]}>
+          <div className={`world-label ${focused || near ? 'active' : ''}`}>
+            {hotspot.name}
+            <span>Premi E per comunicare</span>
+          </div>
+        </Html>
+      )}
     </group>
   )
 }
