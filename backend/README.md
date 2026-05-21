@@ -7,8 +7,11 @@ Gestisce:
 - NPC e personalita
 - scenari decisionali
 - eventi dinamici
-- statistiche citta: `happiness`, `energy`, `order`
+- statistiche citta: `happiness`, `energy`, `order`, `freedom`, `knowledge`, `trust`
+- memoria conversazione NPC tramite `history`
+- narrazione automatica dopo ogni scelta
 - chat NPC con API OpenAI se presente `OPENAI_API_KEY`
+- generazione eventi AI con fallback locale validato
 - fallback locale senza API key, utile per demo hackathon
 
 ## Stack
@@ -111,7 +114,10 @@ Stats:
 {
   happiness: 55,
   energy: 60,
-  order: 60
+  order: 60,
+  freedom: 55,
+  knowledge: 55,
+  trust: 55
 }
 ```
 
@@ -141,7 +147,14 @@ Scenario/evento:
       id: "ration-energy",
       text: "Raziona l'energia in modo uguale per tutti",
       consequence: "...",
-      effects: { happiness: -10, energy: 26, order: 12 }
+      effects: {
+        happiness: -10,
+        energy: 26,
+        order: 12,
+        freedom: -2,
+        knowledge: 2,
+        trust: -4
+      }
     }
   ]
 }
@@ -171,7 +184,14 @@ Response:
 
 ```json
 {
-  "stats": { "happiness": 55, "energy": 60, "order": 60 },
+  "stats": {
+    "happiness": 55,
+    "energy": 60,
+    "order": 60,
+    "freedom": 55,
+    "knowledge": 55,
+    "trust": 55
+  },
   "npcs": [],
   "scenarios": [],
   "dynamicEvents": []
@@ -213,7 +233,14 @@ Request:
 {
   "decisionId": "energy-crisis",
   "choiceId": "ration-energy",
-  "stats": { "happiness": 50, "energy": 50, "order": 50 }
+  "stats": {
+    "happiness": 50,
+    "energy": 50,
+    "order": 50,
+    "freedom": 55,
+    "knowledge": 55,
+    "trust": 55
+  }
 }
 ```
 
@@ -223,8 +250,16 @@ Response:
 {
   "decision": {},
   "choice": {},
-  "stats": { "happiness": 40, "energy": 76, "order": 62 },
-  "npc": {}
+  "stats": {
+    "happiness": 40,
+    "energy": 76,
+    "order": 62,
+    "freedom": 53,
+    "knowledge": 57,
+    "trust": 51
+  },
+  "npc": {},
+  "narrative": "AI Governante osserva la scelta..."
 }
 ```
 
@@ -245,13 +280,21 @@ async function choose(decisionId, choiceId, stats) {
 
 ### `POST /api/event`
 
-Genera evento dinamico in base a stats. Se `energy` bassa, privilegia eventi energia. Se `order` basso, eventi sociali.
+Genera evento dinamico in base a stats e memoria recente. Con `OPENAI_API_KEY` prova a creare un evento nuovo in JSON; senza key usa fallback locale.
 
 Request:
 
 ```json
 {
-  "stats": { "happiness": 55, "energy": 25, "order": 60 }
+  "stats": {
+    "happiness": 55,
+    "energy": 25,
+    "order": 60,
+    "freedom": 55,
+    "knowledge": 55,
+    "trust": 55
+  },
+  "history": [{ "role": "user", "content": "Abbiamo protetto gli ospedali." }]
 }
 ```
 
@@ -260,13 +303,14 @@ Response:
 ```json
 {
   "event": {
-    "id": "solar-failure",
+    "id": "ai-energy-blackout",
     "type": "energy",
-    "title": "Guasto ai collettori solari",
+    "title": "Blackout nei distretti solari",
     "description": "...",
-    "npcId": "citizen-worker",
+    "npcId": "ai-governante",
     "choices": []
-  }
+  },
+  "provider": "local"
 }
 ```
 
@@ -293,10 +337,21 @@ Request:
 {
   "npcId": "ai-governante",
   "message": "Come gestiamo la crisi energetica?",
-  "stats": { "happiness": 55, "energy": 25, "order": 60 },
+  "stats": {
+    "happiness": 55,
+    "energy": 25,
+    "order": 60,
+    "freedom": 55,
+    "knowledge": 55,
+    "trust": 55
+  },
   "context": {
     "scenarioTitle": "Crisi energetica"
-  }
+  },
+  "history": [
+    { "role": "user", "content": "Prima abbiamo scelto privacy urbana." },
+    { "role": "assistant", "content": "La fiducia civica e salita." }
+  ]
 }
 ```
 
@@ -305,7 +360,7 @@ Response:
 ```json
 {
   "npc": {},
-  "reply": "Su \"Crisi energetica\", la riserva energetica richiede contenimento...",
+  "reply": "Ricordo che hai detto: \"Prima abbiamo scelto privacy urbana\". Su \"Crisi energetica\", la riserva energetica richiede contenimento...",
   "provider": "local",
   "messages": []
 }
@@ -320,14 +375,15 @@ Response:
 Frontend:
 
 ```js
-async function sendNpcMessage(npcId, message, stats, scenarioTitle) {
+async function sendNpcMessage(npcId, message, stats, scenarioTitle, history) {
   const result = await api("/api/chat", {
     method: "POST",
     body: JSON.stringify({
       npcId,
       message,
       stats,
-      context: { scenarioTitle }
+      context: { scenarioTitle },
+      history
     })
   });
 
@@ -351,8 +407,9 @@ Request:
 {
   "npcId": "tommaso-campanella",
   "message": "Cosa significa bene comune?",
-  "stats": { "happiness": 55, "energy": 60, "order": 60 },
-  "context": { "scenarioTitle": "Sicurezza vs liberta" }
+  "stats": { "happiness": 55, "energy": 60, "order": 60, "freedom": 55, "knowledge": 55, "trust": 55 },
+  "context": { "scenarioTitle": "Sicurezza vs liberta" },
+  "history": [{ "role": "user", "content": "Non voglio una citta-prigione." }]
 }
 ```
 
@@ -373,9 +430,9 @@ Response:
 2. Mostra primo scenario da `scenarios[0]`
 3. Utente sceglie opzione: `POST /api/choice`
 4. Aggiorna stats con `result.stats`
-5. Mostra `result.choice.consequence`
+5. Mostra `result.choice.consequence` e `result.narrative`
 6. Ogni 1-2 turni: `POST /api/event`
-7. Chat NPC sempre via `POST /api/chat`
+7. Chat NPC sempre via `POST /api/chat`, passando gli ultimi messaggi in `history`
 
 ## Esempio React minimo
 
@@ -423,7 +480,8 @@ export function useCalabriaAi() {
         npcId,
         message,
         stats,
-        context: { scenarioTitle }
+        context: { scenarioTitle },
+        history: []
       })
     });
   }
@@ -444,7 +502,9 @@ Copertura:
 - data shape NPC/scenari
 - clamp stats `0..100`
 - applicazione scelta
-- generazione eventi dinamici
+- generazione eventi dinamici locali/AI
+- memoria conversazione NPC
+- validazione evento JSON generato
 - costruzione prompt OpenAI-style
 - fallback chat locale
 - endpoint HTTP principali

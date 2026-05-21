@@ -3,8 +3,8 @@ import { dynamicEvents, initialStats, npcs, scenarios } from "./aiData.js";
 import {
   applyDecision,
   buildNpcMessages,
-  generateNpcReply,
-  getRandomEvent
+  generateDynamicEvent,
+  generateNpcReply
 } from "./aiEngine.js";
 
 const PORT = Number(process.env.PORT ?? 8787);
@@ -69,9 +69,11 @@ export function createAppServer() {
 
       if (request.method === "POST" && url.pathname === "/api/event") {
         const body = await readJson(request);
-        sendJson(response, 200, {
-          event: getRandomEvent(body.stats ?? initialStats)
+        const result = await generateDynamicEvent({
+          stats: body.stats ?? initialStats,
+          history: body.history ?? []
         });
+        sendJson(response, 200, result);
         return;
       }
 
@@ -87,7 +89,8 @@ export function createAppServer() {
           npcId: body.npcId,
           message: body.message,
           stats: body.stats ?? initialStats,
-          context: body.context ?? {}
+          context: body.context ?? {},
+          history: body.history ?? []
         });
 
         sendJson(response, 200, result);
@@ -101,7 +104,8 @@ export function createAppServer() {
             body.npcId,
             body.message ?? "",
             body.stats ?? initialStats,
-            body.context ?? {}
+            body.context ?? {},
+            body.history ?? []
           )
         });
         return;
@@ -109,7 +113,7 @@ export function createAppServer() {
 
       sendJson(response, 404, { error: "Endpoint non trovato." });
     } catch (error) {
-      sendJson(response, 500, { error: error.message });
+      sendJson(response, error.statusCode ?? 500, { error: error.message });
     }
   });
 }
@@ -134,13 +138,27 @@ function sendJson(response, statusCode, payload) {
 
 async function readJson(request) {
   const chunks = [];
+  let size = 0;
+  const maxBytes = 50 * 1024;
 
   for await (const chunk of request) {
+    size += chunk.length;
+    if (size > maxBytes) {
+      const error = new Error("Payload troppo grande.");
+      error.statusCode = 413;
+      throw error;
+    }
     chunks.push(chunk);
   }
 
   const rawBody = Buffer.concat(chunks).toString("utf8");
-  return rawBody ? JSON.parse(rawBody) : {};
+  try {
+    return rawBody ? JSON.parse(rawBody) : {};
+  } catch {
+    const error = new Error("JSON non valido.");
+    error.statusCode = 400;
+    throw error;
+  }
 }
 
 if (process.argv[1] === new URL(import.meta.url).pathname) {

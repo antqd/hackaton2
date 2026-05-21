@@ -1,7 +1,10 @@
 export const initialStats = {
   happiness: 55,
   energy: 60,
-  order: 60
+  order: 60,
+  freedom: 55,
+  knowledge: 55,
+  trust: 55
 };
 
 export const npcs = [
@@ -75,14 +78,14 @@ export const scenarios = [
         text: "Autorizza la sorveglianza temporanea",
         consequence:
           "I disordini calano rapidamente, ma molti cittadini iniziano a parlare meno e a fidarsi meno delle istituzioni.",
-        effects: { happiness: -12, energy: 0, order: 22 }
+        effects: { happiness: -12, energy: 0, order: 22, freedom: -12, knowledge: 3, trust: -12 }
       },
       {
         id: "protect-civil-freedom",
         text: "Proteggi la liberta civile",
         consequence:
           "La popolazione si sente rispettata, ma la gestione dei conflitti diventa piu lenta e incerta.",
-        effects: { happiness: 14, energy: 0, order: -14 }
+        effects: { happiness: 14, energy: 0, order: -14, freedom: 16, knowledge: 0, trust: 10 }
       }
     ]
   },
@@ -98,14 +101,14 @@ export const scenarios = [
         text: "Raziona l'energia in modo uguale per tutti",
         consequence:
           "La rete viene stabilizzata e nessun quartiere resta escluso, ma la qualita della vita peggiora per alcuni giorni.",
-        effects: { happiness: -10, energy: 26, order: 12 }
+        effects: { happiness: -10, energy: 26, order: 12, freedom: -2, knowledge: 2, trust: -4 }
       },
       {
         id: "prioritize-public-services",
         text: "Dai priorita a ospedali, scuole e trasporti",
         consequence:
           "I servizi essenziali reggono, ma alcuni distretti residenziali subiscono blackout e protestano.",
-        effects: { happiness: -6, energy: 16, order: -6 }
+        effects: { happiness: -6, energy: 16, order: -6, freedom: 4, knowledge: 4, trust: 2 }
       }
     ]
   },
@@ -121,14 +124,14 @@ export const scenarios = [
         text: "Rendi obbligatoria l'educazione pubblica",
         consequence:
           "La cultura comune cresce e le decisioni collettive migliorano, ma una parte dei cittadini percepisce imposizione.",
-        effects: { happiness: -5, energy: -4, order: 16 }
+        effects: { happiness: -5, energy: -4, order: 16, freedom: -10, knowledge: 18, trust: -3 }
       },
       {
         id: "voluntary-learning",
         text: "Mantieni le lezioni volontarie",
         consequence:
           "La liberta personale viene rispettata, ma la partecipazione resta diseguale tra i quartieri.",
-        effects: { happiness: 9, energy: 0, order: -8 }
+        effects: { happiness: 9, energy: 0, order: -8, freedom: 12, knowledge: 6, trust: 5 }
       }
     ]
   },
@@ -144,14 +147,14 @@ export const scenarios = [
         text: "Permetti il monitoraggio emotivo preventivo",
         consequence:
           "Le crisi vengono intercettate prima, ma la citta rischia di trasformare la cura in controllo.",
-        effects: { happiness: -18, energy: 4, order: 28 }
+        effects: { happiness: -18, energy: 4, order: 28, freedom: -24, knowledge: 8, trust: -18 }
       },
       {
         id: "limit-ai-access",
         text: "Limita l'accesso dell'AI ai dati personali",
         consequence:
           "I cittadini recuperano autonomia e fiducia, ma il governo perde capacita predittiva.",
-        effects: { happiness: 18, energy: -6, order: -18 }
+        effects: { happiness: 18, energy: -6, order: -18, freedom: 22, knowledge: -2, trust: 14 }
       }
     ]
   }
@@ -171,14 +174,14 @@ export const dynamicEvents = [
         text: "Chiedi turni extra ai tecnici",
         consequence:
           "L'energia torna piu in fretta, ma la fatica sociale aumenta.",
-        effects: { happiness: -8, energy: 18, order: 4 }
+        effects: { happiness: -8, energy: 18, order: 4, freedom: -3, knowledge: 1, trust: -5 }
       },
       {
         id: "slow-safe-repairs",
         text: "Ripara lentamente senza sovraccaricare i lavoratori",
         consequence:
           "I lavoratori si sentono rispettati, ma la carenza energetica dura di piu.",
-        effects: { happiness: 7, energy: -8, order: -3 }
+        effects: { happiness: 7, energy: -8, order: -3, freedom: 4, knowledge: 2, trust: 6 }
       }
     ]
   },
@@ -195,14 +198,14 @@ export const dynamicEvents = [
         text: "Trasforma l'assemblea in dibattito pubblico",
         consequence:
           "La tensione cala e nasce confronto, ma il processo decisionale rallenta.",
-        effects: { happiness: 12, energy: -2, order: -6 }
+        effects: { happiness: 12, energy: -2, order: -6, freedom: 14, knowledge: 5, trust: 10 }
       },
       {
         id: "disperse-assembly",
         text: "Sciogli l'assemblea per mantenere l'ordine",
         consequence:
           "La piazza torna calma, ma la sfiducia cresce sotto la superficie.",
-        effects: { happiness: -14, energy: 0, order: 18 }
+        effects: { happiness: -14, energy: 0, order: 18, freedom: -14, knowledge: -2, trust: -12 }
       }
     ]
   },
@@ -219,14 +222,14 @@ export const dynamicEvents = [
         text: "Pubblica l'errore e correggi apertamente",
         consequence:
           "La trasparenza rafforza la fiducia, anche se l'autorita sembra meno infallibile.",
-        effects: { happiness: 10, energy: -1, order: -4 }
+        effects: { happiness: 10, energy: -1, order: -4, freedom: 8, knowledge: 12, trust: 10 }
       },
       {
         id: "silent-fix",
         text: "Correggi in silenzio per evitare panico",
         consequence:
           "L'ordine resta stabile, ma se la scelta emerge il danno reputazionale sara maggiore.",
-        effects: { happiness: -6, energy: 0, order: 8 }
+        effects: { happiness: -6, energy: 0, order: 8, freedom: -6, knowledge: -6, trust: -10 }
       }
     ]
   },
@@ -243,14 +246,14 @@ export const dynamicEvents = [
         text: "Apri i distretti e integra subito i nuovi cittadini",
         consequence:
           "La scelta aumenta solidarieta e pressione sui servizi pubblici.",
-        effects: { happiness: 8, energy: -10, order: -8 }
+        effects: { happiness: 8, energy: -10, order: -8, freedom: 6, knowledge: 2, trust: 9 }
       },
       {
         id: "controlled-entry",
         text: "Accetta ingressi graduali controllati dall'AI",
         consequence:
           "I servizi reggono meglio, ma molti giudicano la misura fredda e selettiva.",
-        effects: { happiness: -7, energy: 4, order: 12 }
+        effects: { happiness: -7, energy: 4, order: 12, freedom: -8, knowledge: 1, trust: -6 }
       }
     ]
   }
