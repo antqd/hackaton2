@@ -211,7 +211,6 @@ function App() {
         onDecision={handleDecision}
         playerPosition={playerPosition}
         scenario={scenario}
-        signalLog={signalLog}
         stats={stats}
       />
 

@@ -6,7 +6,7 @@ const statsConfig = [
   { key: 'order', label: 'Ordine', color: '#7df3c6' },
 ]
 
-function HUD({ cityState, consequence, onDecision, playerPosition, scenario, signalLog, stats }) {
+function HUD({ cityState, consequence, onDecision, playerPosition, scenario, stats }) {
   const [missionOpen, setMissionOpen] = useState(false)
 
   useEffect(() => {
@@ -91,15 +91,6 @@ function HUD({ cityState, consequence, onDecision, playerPosition, scenario, sig
           <p className="mission-collapsed-copy">Press Q to open mission choices.</p>
         )}
       </article>
-
-      <aside className="log-panel">
-        <p className="panel-kicker">City signal log</p>
-        <ul>
-          {signalLog.map((entry) => (
-            <li key={entry}>{entry}</li>
-          ))}
-        </ul>
-      </aside>
 
       <div className="interaction-hint">First-person mode • WASD move • mouse look • Shift sprint • Look at an NPC and press E</div>
     </section>
