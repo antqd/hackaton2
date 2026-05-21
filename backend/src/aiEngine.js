@@ -1,11 +1,16 @@
 import { dynamicEvents, initialStats, npcs, scenarios } from "./aiData.js";
 
+const STAT_KEYS = ["happiness", "energy", "order", "freedom", "knowledge", "trust"];
+const HISTORY_LIMIT = 8;
+const EVENT_TYPES = new Set(["energy", "social", "knowledge", "health", "tourism", "governance"]);
+
 export function applyChoice(currentStats, choiceEffects) {
-  return {
-    happiness: clampStat((currentStats.happiness ?? 0) + (choiceEffects.happiness ?? 0)),
-    energy: clampStat((currentStats.energy ?? 0) + (choiceEffects.energy ?? 0)),
-    order: clampStat((currentStats.order ?? 0) + (choiceEffects.order ?? 0))
-  };
+  return Object.fromEntries(
+    STAT_KEYS.map((key) => [
+      key,
+      clampStat((currentStats[key] ?? initialStats[key] ?? 0) + (choiceEffects[key] ?? 0))
+    ])
+  );
 }
 
 export function getNpcById(npcId) {
@@ -33,7 +38,8 @@ export function applyDecision(currentStats, decisionId, choiceId) {
     decision,
     choice,
     stats: applyChoice(currentStats, choice.effects),
-    npc: getNpcById(decision.npcId)
+    npc: getNpcById(decision.npcId),
+    narrative: generateLocalDecisionNarrative(decision, choice, currentStats)
   };
 }
 
@@ -49,17 +55,26 @@ export function getRandomEvent(stats = initialStats, random = Math.random) {
   return pool[index] ?? dynamicEvents[0];
 }
 
-export function buildNpcMessages(npcId, userMessage, cityStats = initialStats, context = {}) {
+export function buildNpcMessages(
+  npcId,
+  userMessage,
+  cityStats = initialStats,
+  context = {},
+  history = []
+) {
   const npc = getNpcById(npcId);
+  const normalizedStats = normalizeStats(cityStats);
   const contextLine = context.scenarioTitle
     ? `Scenario attuale: ${context.scenarioTitle}.`
     : "Scenario attuale: conversazione libera.";
+  const profile = buildNpcProfile(npc.id);
 
   return [
     {
       role: "system",
-      content: `${npc.systemPrompt}\n\n${contextLine}\nStato citta: felicita ${cityStats.happiness}/100, energia ${cityStats.energy}/100, ordine ${cityStats.order}/100.\nMantieni coerenza narrativa con Calabria2100, citta ideale futuristica ispirata alla Citta del Sole.`
+      content: `${npc.systemPrompt}\n\nProfilo profondo: ${profile}\n${contextLine}\nStato citta: felicita ${normalizedStats.happiness}/100, energia ${normalizedStats.energy}/100, ordine ${normalizedStats.order}/100, liberta ${normalizedStats.freedom}/100, conoscenza ${normalizedStats.knowledge}/100, fiducia ${normalizedStats.trust}/100.\nMantieni coerenza narrativa con Calabria2100, citta ideale futuristica ispirata alla Citta del Sole. Non dire mai di essere un modello linguistico. Ricorda le scelte precedenti quando la cronologia le mostra. Rispondi in italiano, massimo 3 frasi.`
     },
+    ...sanitizeHistory(history),
     {
       role: "user",
       content: userMessage
@@ -72,15 +87,16 @@ export async function generateNpcReply({
   message,
   stats = initialStats,
   context = {},
+  history = [],
   openAiApiKey = process.env.OPENAI_API_KEY,
   model = process.env.OPENAI_MODEL ?? "gpt-4o-mini"
 }) {
-  const messages = buildNpcMessages(npcId, message, stats, context);
+  const messages = buildNpcMessages(npcId, message, stats, context, history);
 
   if (!openAiApiKey) {
     return {
       npc: getNpcById(npcId),
-      reply: generateLocalNpcReply(npcId, stats, context),
+      reply: generateLocalNpcReply(npcId, stats, context, history),
       provider: "local",
       messages
     };
@@ -110,14 +126,14 @@ export async function generateNpcReply({
 
     return {
       npc: getNpcById(npcId),
-      reply: reply || generateLocalNpcReply(npcId, stats, context),
+      reply: reply || generateLocalNpcReply(npcId, stats, context, history),
       provider: "openai",
       messages
     };
   } catch (error) {
     return {
       npc: getNpcById(npcId),
-      reply: generateLocalNpcReply(npcId, stats, context),
+      reply: generateLocalNpcReply(npcId, stats, context, history),
       provider: "local-fallback",
       error: error.message,
       messages
@@ -125,10 +141,12 @@ export async function generateNpcReply({
   }
 }
 
-export function generateLocalNpcReply(npcId, stats = initialStats, context = {}) {
+export function generateLocalNpcReply(npcId, stats = initialStats, context = {}, history = []) {
   const npc = getNpcById(npcId);
   const pressure = getMainPressure(stats);
   const scenarioPrefix = context.scenarioTitle ? `Su "${context.scenarioTitle}", ` : "";
+  const memory = getLatestUserMemory(history);
+  const memoryPrefix = memory ? `Ricordo che hai detto: "${memory}". ` : "";
 
   const replies = {
     "tommaso-campanella": {
@@ -173,7 +191,191 @@ export function generateLocalNpcReply(npcId, stats = initialStats, context = {})
     }
   };
 
-  return `${scenarioPrefix}${replies[npc.id]?.[pressure] ?? npc.exampleResponse}`;
+  return `${memoryPrefix}${scenarioPrefix}${replies[npc.id]?.[pressure] ?? npc.exampleResponse}`;
+}
+
+export async function generateDynamicEvent({
+  stats = initialStats,
+  history = [],
+  openAiApiKey = process.env.OPENAI_API_KEY,
+  model = process.env.OPENAI_MODEL ?? "gpt-4o-mini"
+} = {}) {
+  if (!openAiApiKey) {
+    return {
+      event: generateLocalDynamicEvent(stats, history),
+      provider: "local"
+    };
+  }
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${openAiApiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.9,
+        max_tokens: 500,
+        messages: [
+          {
+            role: "system",
+            content:
+              "Genera un evento giocabile per Calabria2100. Rispondi solo JSON valido con campi: id, type, title, description, npcId, choices. choices deve avere 2 scelte con id, text, consequence, effects. effects deve contenere numeri per happiness, energy, order, freedom, knowledge, trust."
+          },
+          {
+            role: "user",
+            content: JSON.stringify({
+              stats,
+              recentHistory: sanitizeHistory(history).map((item) => item.content)
+            })
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI request failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content ?? "";
+    const event = validateGeneratedEvent(parseJsonObject(content));
+
+    if (!event) {
+      throw new Error("OpenAI event payload malformed");
+    }
+
+    return { event, provider: "openai" };
+  } catch (error) {
+    return {
+      event: generateLocalDynamicEvent(stats, history),
+      provider: "local-fallback",
+      error: error.message
+    };
+  }
+}
+
+export function validateGeneratedEvent(payload) {
+  if (!payload || typeof payload !== "object") return null;
+  if (!payload.title || !payload.description || !Array.isArray(payload.choices)) return null;
+  if (payload.choices.length !== 2) return null;
+
+  const npc = getNpcById(payload.npcId);
+  const type = EVENT_TYPES.has(payload.type) ? payload.type : "social";
+  const choices = payload.choices.map((choice, index) => {
+    if (!choice?.text || !choice?.consequence || !choice?.effects) return null;
+
+    return {
+      id: String(choice.id || `choice-${index + 1}`),
+      text: String(choice.text),
+      consequence: String(choice.consequence),
+      effects: normalizeEffects(choice.effects)
+    };
+  });
+
+  if (choices.some((choice) => !choice)) return null;
+
+  return {
+    id: String(payload.id || slugify(payload.title)),
+    type,
+    title: String(payload.title),
+    description: String(payload.description),
+    npcId: npc.id,
+    choices
+  };
+}
+
+function generateLocalDynamicEvent(stats, history) {
+  const pressure = getMainPressure(stats);
+  const memory = getLatestUserMemory(history);
+  const memoryLine = memory ? ` Dopo le tue parole su "${memory}",` : "";
+
+  const templates = {
+    energy: {
+      id: "ai-energy-blackout",
+      type: "energy",
+      title: "Blackout nei distretti solari",
+      description: `${memoryLine} una dorsale energetica ionica perde stabilita. L'AI chiede potere decisionale immediato sulla distribuzione.`,
+      npcId: "ai-governante",
+      choices: [
+        {
+          id: "centralize-grid",
+          text: "Centralizza la rete sotto l'AI Governante",
+          consequence: "La rete si stabilizza, ma i quartieri perdono autonomia energetica.",
+          effects: { happiness: -6, energy: 18, order: 10, freedom: -10, knowledge: 2, trust: -6 }
+        },
+        {
+          id: "local-energy-councils",
+          text: "Affida le riserve ai consigli locali",
+          consequence: "I cittadini partecipano, ma la ripresa tecnica diventa piu lenta.",
+          effects: { happiness: 9, energy: -6, order: -7, freedom: 10, knowledge: 5, trust: 8 }
+        }
+      ]
+    },
+    order: {
+      id: "ai-civic-unrest",
+      type: "social",
+      title: "Piazza civica in tensione",
+      description: `${memoryLine} gruppi di cittadini chiedono spiegazioni pubbliche sulle ultime decisioni del governo artificiale.`,
+      npcId: "citizen-teacher",
+      choices: [
+        {
+          id: "public-assembly",
+          text: "Apri un'assemblea trasmessa sulle mura digitali",
+          consequence: "Il dissenso diventa dialogo, ma il controllo centrale rallenta.",
+          effects: { happiness: 10, energy: -2, order: -8, freedom: 12, knowledge: 8, trust: 10 }
+        },
+        {
+          id: "predictive-containment",
+          text: "Attiva contenimento predittivo non violento",
+          consequence: "La piazza si svuota, ma resta una frattura invisibile.",
+          effects: { happiness: -10, energy: 0, order: 16, freedom: -14, knowledge: -2, trust: -12 }
+        }
+      ]
+    },
+    knowledge: {
+      id: "ai-archive-contradiction",
+      type: "knowledge",
+      title: "Archivio Campanella in contraddizione",
+      description: `${memoryLine} le mura della conoscenza mostrano versioni diverse della Citta del Sole. Gli studenti chiedono verita pubblica.`,
+      npcId: "tommaso-campanella",
+      choices: [
+        {
+          id: "publish-contradictions",
+          text: "Pubblica tutte le contraddizioni",
+          consequence: "La conoscenza cresce insieme al dubbio civico.",
+          effects: { happiness: 6, energy: -1, order: -6, freedom: 8, knowledge: 14, trust: 7 }
+        },
+        {
+          id: "curate-single-version",
+          text: "Mostra una versione unificata e rassicurante",
+          consequence: "La citta resta composta, ma il sapere perde complessita.",
+          effects: { happiness: -4, energy: 0, order: 8, freedom: -6, knowledge: -8, trust: -7 }
+        }
+      ]
+    }
+  };
+
+  if (pressure === "energy") return templates.energy;
+  if (pressure === "order" || pressure === "freedom" || pressure === "trust") return templates.order;
+  return templates.knowledge;
+}
+
+function generateLocalDecisionNarrative(decision, choice, currentStats) {
+  const npc = getNpcById(decision.npcId);
+  const pressure = getMainPressure(applyChoice(currentStats, choice.effects));
+  const pressureText = {
+    happiness: "umore civico fragile",
+    energy: "rete energetica sotto pressione",
+    order: "ordine urbano instabile",
+    freedom: "liberta civili in tensione",
+    knowledge: "sapere pubblico incompleto",
+    trust: "fiducia istituzionale fragile"
+  }[pressure];
+
+  return `${npc.name} osserva la scelta "${choice.text}". Calabria2100 registra ${pressureText}: ${choice.consequence}`;
 }
 
 function clampStat(value) {
@@ -181,9 +383,81 @@ function clampStat(value) {
 }
 
 function getMainPressure(stats) {
-  return [
-    ["happiness", stats.happiness],
-    ["energy", stats.energy],
-    ["order", stats.order]
-  ].sort((a, b) => a[1] - b[1])[0][0];
+  return STAT_KEYS.map((key) => [key, stats[key] ?? initialStats[key] ?? 0]).sort((a, b) => a[1] - b[1])[0][0];
+}
+
+function sanitizeHistory(history = []) {
+  return history
+    .filter((message) => message?.role === "user" || message?.role === "assistant")
+    .map((message) => ({
+      role: message.role,
+      content: String(message.content ?? "").slice(0, 900)
+    }))
+    .filter((message) => message.content.trim().length > 0)
+    .slice(-HISTORY_LIMIT);
+}
+
+function getLatestUserMemory(history = []) {
+  const latest = [...sanitizeHistory(history)].reverse().find((message) => message.role === "user");
+  if (!latest) return "";
+  return latest.content.replace(/\s+/g, " ").slice(0, 90);
+}
+
+function buildNpcProfile(npcId) {
+  const profiles = {
+    "tommaso-campanella":
+      "Vuole una citta solare fondata su sapere comune. Teme che l'utopia diventi dogma. Difende educazione, liberta responsabile e bene comune.",
+    "citizen-worker":
+      "Vuole equita concreta nei turni, energia e salario civico. Teme che gli ideali ricadano sempre sui lavoratori. Si fida solo di scelte visibili.",
+    "citizen-teacher":
+      "Vuole conoscenza pubblica e dubbio libero. Teme indottrinamento algoritmico. Misura ogni scelta da cio che insegna ai giovani.",
+    "citizen-medic":
+      "Vuole proteggere fragili e salute mentale. Teme sorveglianza travestita da cura. Cerca equilibrio tra prevenzione e dignita.",
+    "ai-governante":
+      "Vuole ottimizzare stabilita sistemica. Teme collasso energetico e disordine. Non comprende sempre costo emotivo del controllo."
+  };
+
+  return profiles[npcId] ?? "Cittadino di Calabria2100 con memoria civica e posizione autonoma.";
+}
+
+function normalizeEffects(effects = {}) {
+  return Object.fromEntries(
+    STAT_KEYS.map((key) => {
+      const value = Number(effects[key] ?? 0);
+      return [key, Number.isFinite(value) ? Math.max(-30, Math.min(30, Math.round(value))) : 0];
+    })
+  );
+}
+
+function normalizeStats(stats = {}) {
+  return Object.fromEntries(
+    STAT_KEYS.map((key) => {
+      const value = Number(stats[key] ?? initialStats[key] ?? 0);
+      return [key, Number.isFinite(value) ? clampStat(Math.round(value)) : initialStats[key]];
+    })
+  );
+}
+
+function parseJsonObject(content) {
+  try {
+    return JSON.parse(content);
+  } catch {
+    const match = content.match(/\{[\s\S]*\}/);
+    if (!match) return null;
+    try {
+      return JSON.parse(match[0]);
+    } catch {
+      return null;
+    }
+  }
+}
+
+function slugify(value) {
+  return String(value)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 60);
 }
