@@ -4,7 +4,7 @@ import * as THREE from 'three'
 
 const WALK_SPEED = 10
 const SPRINT_SPEED = 18
-const START = new THREE.Vector3(-14, 2.2, 2)
+const START = new THREE.Vector3(-14, 2.5, 3)
 const WORLD_LIMIT = 95
 
 function PlayerController({ onPlayerPosition }) {

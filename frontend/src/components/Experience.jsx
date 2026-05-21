@@ -7,7 +7,10 @@ import CharacterModel from './CharacterModel'
 import PlayerController from './PlayerController'
 
 const hotspots = [
-  { id: 'simona', name: 'Simona', type: 'npc', position: [2.8, 1.5, 4.5], color: '#7df3c6' },
+  { id: 'ai-governante', name: 'AI Governante', type: 'npc', position: [4, 1.4, -1], color: '#9ee8ff', model: '/models/player.glb' },
+  { id: 'young-activist', name: 'Young Activist', type: 'npc', position: [-12, 1.4, -12], color: '#ff8fb7', model: '/models/player2.glb' },
+  { id: 'historical-elder', name: 'Tommaso Campanella', type: 'npc', position: [-13, 1.4, 0], color: '#f7c968', model: '/models/player3.glb' },
+  { id: 'young-technologist', name: 'Young Technologist', type: 'npc', position: [-26, 1.4, -2], color: '#7df3c6', model: '/models/player4.glb' },
 ]
 
 const broadcasts = [
@@ -18,6 +21,40 @@ const broadcasts = [
 ]
 
 function Experience({ activeNpc, onNpcSelect, onPlayerPosition, onTerminalActivate, onWorldEvent, stats }) {
+  const hotspotRefs = useRef({})
+  const cameraDirection = useRef(new THREE.Vector3())
+  const targetDirection = useRef(new THREE.Vector3())
+  const targetPosition = useRef(new THREE.Vector3())
+  const [focusedHotspotId, setFocusedHotspotId] = useState(null)
+
+  const hotspotLookup = useMemo(
+    () => Object.fromEntries(hotspots.map((hotspot) => [hotspot.id, hotspot])),
+    [],
+  )
+
+  const activateHotspot = (hotspot) => {
+    if (!hotspot) return
+    if (hotspot.type === 'terminal') {
+      onTerminalActivate()
+      return
+    }
+    onNpcSelect(hotspot.name)
+  }
+
+  useEffect(() => {
+    const handleInteract = (event) => {
+      if (event.code !== 'KeyE') return
+      const hotspot = hotspotLookup[focusedHotspotId]
+      if (!hotspot) return
+
+      event.preventDefault()
+      activateHotspot(hotspot)
+    }
+
+    window.addEventListener('keydown', handleInteract)
+    return () => window.removeEventListener('keydown', handleInteract)
+  }, [activateHotspot, focusedHotspotId, hotspotLookup])
+
   return (
     <Canvas
       camera={{ fov: 62, near: 0.1, far: 180 }}
@@ -71,12 +108,31 @@ function Experience({ activeNpc, onNpcSelect, onPlayerPosition, onTerminalActiva
       <SolarpunkAtmosphere stats={stats} />
       <Hotspots
         activeNpc={activeNpc}
+        focusedHotspotId={focusedHotspotId}
+        registerHotspotRef={(id, object) => {
+          if (!object) {
+            delete hotspotRefs.current[id]
+            return
+          }
+
+          hotspotRefs.current[id] = object
+        }}
         onNpcSelect={onNpcSelect}
         onTerminalActivate={onTerminalActivate}
+        onActivate={activateHotspot}
       />
 
       <Stars radius={100} depth={45} count={2600} factor={3.8} saturation={0} fade speed={0.36} />
       <Environment preset="night" environmentIntensity={0.42} />
+
+      <InteractionTracker
+        focusedHotspotId={focusedHotspotId}
+        hotspotRefs={hotspotRefs}
+        onFocusChange={setFocusedHotspotId}
+        cameraDirection={cameraDirection}
+        targetDirection={targetDirection}
+        targetPosition={targetPosition}
+      />
     </Canvas>
   )
 }
@@ -120,6 +176,55 @@ function WorldEventLoop({ onWorldEvent }) {
 
     last.current = clock.elapsedTime
     onWorldEvent(broadcasts[Math.floor(Math.random() * broadcasts.length)])
+  })
+
+  return null
+}
+
+function InteractionTracker({
+  focusedHotspotId,
+  hotspotRefs,
+  onFocusChange,
+  cameraDirection,
+  targetDirection,
+  targetPosition,
+}) {
+  useFrame(({ camera }) => {
+    const maxDistance = 10
+    const minDot = 0.93
+    let bestId = null
+    let bestDot = minDot
+    let bestDistance = Infinity
+
+    camera.getWorldDirection(cameraDirection.current)
+
+    for (const hotspot of hotspots) {
+      if (hotspot.type !== 'npc') continue
+
+      const object = hotspotRefs.current[hotspot.id]
+      if (!object) continue
+
+      object.getWorldPosition(targetPosition.current)
+      targetPosition.current.y += 0.55
+
+      targetDirection.current.subVectors(targetPosition.current, camera.position)
+      const distance = targetDirection.current.length()
+      if (distance > maxDistance) continue
+
+      targetDirection.current.normalize()
+      const dot = cameraDirection.current.dot(targetDirection.current)
+      if (dot < minDot) continue
+
+      if (dot > bestDot || (dot === bestDot && distance < bestDistance)) {
+        bestId = hotspot.id
+        bestDot = dot
+        bestDistance = distance
+      }
+    }
+
+    if (bestId !== focusedHotspotId) {
+      onFocusChange(bestId)
+    }
   })
 
   return null
@@ -178,41 +283,30 @@ function MediterraneanGlow({ stats }) {
   )
 }
 
-function Hotspots({ activeNpc, onNpcSelect, onTerminalActivate }) {
+function Hotspots({ activeNpc, focusedHotspotId, onActivate, registerHotspotRef }) {
   return hotspots.map((hotspot) => (
     <Hotspot
       active={activeNpc === hotspot.name}
+      focused={focusedHotspotId === hotspot.id}
       hotspot={hotspot}
       key={hotspot.id}
-      onActivate={() => {
-        if (hotspot.type === 'terminal') {
-          onTerminalActivate()
-          return
-        }
-        onNpcSelect(hotspot.name)
-      }}
+      onActivate={() => onActivate(hotspot)}
+      registerRef={(object) => registerHotspotRef(hotspot.id, object)}
     />
   ))
 }
 
-function Hotspot({ active, hotspot, onActivate }) {
+function Hotspot({ active, focused, hotspot, onActivate, registerRef }) {
   const ref = useRef()
   const nearRef = useRef(false)
   const [near, setNear] = useState(false)
 
-  useEffect(() => {
-    const handleInteract = (event) => {
-      if (event.code === 'KeyE' && nearRef.current) onActivate()
-    }
-
-    window.addEventListener('keydown', handleInteract)
-    return () => window.removeEventListener('keydown', handleInteract)
-  }, [onActivate])
-
   useFrame(({ camera, clock }) => {
     if (!ref.current) return
 
-    if (hotspot.name !== 'Simona') {
+    registerRef(ref.current)
+
+    if (hotspot.type !== 'npc') {
       ref.current.rotation.y = clock.elapsedTime * 0.55
       ref.current.position.y = hotspot.position[1] + Math.sin(clock.elapsedTime * 1.5) * 0.08
     }
@@ -228,14 +322,20 @@ function Hotspot({ active, hotspot, onActivate }) {
     <group position={hotspot.position}>
       <group>
         <group
-          onClick={(event) => {
+          onPointerDown={(event) => {
             event.stopPropagation()
             onActivate()
           }}
+          onPointerOver={() => {
+            document.body.style.cursor = 'pointer'
+          }}
+          onPointerOut={() => {
+            document.body.style.cursor = 'none'
+          }}
           ref={ref}
         >
-          {hotspot.name === 'Simona' ? (
-            <CharacterModel height={1.75} rotationY={Math.PI} />
+          {hotspot.type === 'npc' ? (
+            <CharacterModel src={hotspot.model} height={1.15} rotationY={0} />
           ) : (
             <mesh castShadow>
               {hotspot.type === 'terminal' ? (
@@ -253,9 +353,9 @@ function Hotspot({ active, hotspot, onActivate }) {
         <meshStandardMaterial color={hotspot.color} emissive={hotspot.color} emissiveIntensity={near ? 1.6 : 0.9} transparent opacity={near ? 0.82 : 0.45} />
       </mesh>
       <Html center distanceFactor={8} position={[0, 1.15, 0]}>
-        <div className={`world-label ${active || near ? 'active' : ''}`}>
+        <div className={`world-label ${active || focused || near ? 'active' : ''}`}>
           {hotspot.name}
-          {near && <span>Press E or click</span>}
+          <span>Premi E per comunicare</span>
         </div>
       </Html>
     </group>

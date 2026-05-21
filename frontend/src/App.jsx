@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import Experience from './components/Experience'
 import HUD from './components/HUD'
@@ -20,6 +20,10 @@ const initialStats = {
 }
 
 const npcProfiles = {
+  'AI Governante': 'Sistema centrale della citta: freddo, logico, preciso. Massimizza ordine ed efficienza.',
+  'Young Activist': 'Studentessa critica e attivista. Difende liberta, diritti e umanita.',
+  'Historical Elder': 'Memoria storica della Calabria. Saggio, nostalgico, diffidente verso il controllo AI.',
+  'Young Technologist': 'Giovane sviluppatore pro-AI. Curioso, pragmatico, ottimista.',
   'AI Governor': 'Central governance intelligence. Optimizes order, energy and social stability.',
   'Campanella AI': 'Philosopher hologram rebuilt from writings, myth and civic memory.',
   Scientist: 'Models energy, agriculture and systemic risk across the solar network.',
@@ -36,11 +40,16 @@ function App() {
   const [scenario, setScenario] = useState(scenarios[0])
   const [consequence, setConsequence] = useState(getOpeningMessage())
   const [selectedNpc, setSelectedNpc] = useState(null)
-  const [playerPosition, setPlayerPosition] = useState({ x: -14, y: 2.2, z: 2 })
+  const [playerPosition, setPlayerPosition] = useState({ x: -16, y: 2, z: -11 })
   const [signalLog, setSignalLog] = useState([
     'Entering Calabria 2100. Solar city mesh synchronized.',
     'Campanella archive awake below central plaza.',
   ])
+
+  useEffect(() => {
+    document.body.classList.toggle('ui-cursor', Boolean(selectedNpc))
+    return () => document.body.classList.remove('ui-cursor')
+  }, [selectedNpc])
 
   const cityState = useMemo(() => {
     const average = Math.round((stats.happiness + stats.energy + stats.order) / 3)

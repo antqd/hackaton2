@@ -37,6 +37,10 @@ body {
   cursor: none;
 }
 
+body.ui-cursor {
+  cursor: auto;
+}
+
 button {
   border: 0;
   font: inherit;

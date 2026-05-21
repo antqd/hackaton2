@@ -123,6 +123,34 @@ export const scenarios = [
 
 const npcReplies = [
   {
+    sender: 'AI Governante',
+    tone: 'logic',
+    text: 'La liberta individuale introduce variabili instabili. Posso ridurre sofferenza e spreco, ma il prezzo sara una citta piu prevedibile.',
+    consequence: 'Il sistema centrale apre il protocollo di governo predittivo.',
+    statShift: { happiness: -1, energy: 2, order: 5 },
+  },
+  {
+    sender: 'Young Activist',
+    tone: 'freedom',
+    text: 'Non basta una citta efficiente. Se ogni scelta viene prevista, corretta e filtrata, allora non siamo cittadini: siamo output.',
+    consequence: 'La protesta civile cresce, ma anche la fiducia tra giovani cittadini.',
+    statShift: { happiness: 4, energy: -1, order: -4 },
+  },
+  {
+    sender: 'Historical Elder',
+    tone: 'memory',
+    text: 'Ho visto paesi svuotarsi e tornare vivi. La tecnologia aiuta, ma una comunita senza memoria diventa facile da comandare.',
+    consequence: 'La memoria storica rafforza identita collettiva e prudenza politica.',
+    statShift: { happiness: 2, energy: 0, order: 1 },
+  },
+  {
+    sender: 'Young Technologist',
+    tone: 'innovation',
+    text: 'Possiamo usare l AI senza diventare schiavi dell AI. Il problema non e il codice: e chi decide gli obiettivi.',
+    consequence: 'Il distretto tech propone una governance AI piu trasparente.',
+    statShift: { happiness: 2, energy: 2, order: -1 },
+  },
+  {
     sender: 'AI Governor',
     tone: 'analysis',
     text: 'La tua domanda apre un conflitto tra efficienza e consenso. Posso ottimizzare la citta, ma non posso produrre fiducia senza partecipazione reale.',

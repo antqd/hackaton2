@@ -28,7 +28,7 @@ function HUD({ cityState, consequence, onDecision, playerPosition, scenario, sig
       <header className="hud-title">
         <p>Protocollo Campanella 2100</p>
         <h1>Citta del Sole AI</h1>
-        <span>Click city to enter first-person. WASD move, mouse look, Shift sprint. Walk to Simona and press E.</span>
+        <span>Click city to enter first-person. WASD move, mouse look, Shift sprint. Look at an NPC and press E.</span>
       </header>
 
       <aside className="debug-panel">
@@ -101,7 +101,7 @@ function HUD({ cityState, consequence, onDecision, playerPosition, scenario, sig
         </ul>
       </aside>
 
-      <div className="interaction-hint">First-person mode • WASD move • mouse look • Shift sprint • E interact</div>
+      <div className="interaction-hint">First-person mode • WASD move • mouse look • Shift sprint • Look at an NPC and press E</div>
     </section>
   )
 }
