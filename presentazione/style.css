@@ -129,6 +129,7 @@ a {
   position: relative;
   display: grid;
   align-items: center;
+  align-content: center;
   min-height: 100vh;
   padding: 112px clamp(20px, 6vw, 92px) 72px;
 }
@@ -396,6 +397,11 @@ h3 {
   text-align: center;
 }
 
+.section-heading p {
+  margin-right: auto;
+  margin-left: auto;
+}
+
 .concept-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -405,6 +411,9 @@ h3 {
 }
 
 .concept-card {
+  display: grid;
+  justify-items: center;
+  text-align: center;
   min-height: 310px;
   padding: 28px;
   border: 1px solid var(--line);
@@ -416,6 +425,9 @@ h3 {
 }
 
 .concept-card p {
+  max-width: 30ch;
+  margin-right: auto;
+  margin-left: auto;
   margin-bottom: 0;
   color: var(--muted);
   line-height: 1.65;
@@ -426,7 +438,7 @@ h3 {
   place-items: center;
   width: 58px;
   height: 58px;
-  margin-bottom: 28px;
+  margin: 0 auto 28px;
   border-radius: 18px;
   color: var(--gold);
   background: rgba(244, 201, 93, 0.12);
@@ -448,12 +460,34 @@ h3 {
   grid-template-columns: minmax(0, 0.88fr) minmax(340px, 1.12fr);
   gap: clamp(28px, 5vw, 72px);
   align-items: center;
+  justify-items: center;
   width: min(1180px, 100%);
   margin: 0 auto;
 }
 
+.demo-copy {
+  width: 100%;
+  text-align: center;
+}
+
 .demo-copy h2 {
+  max-width: 100%;
   color: var(--text);
+  font-size: clamp(2.65rem, 4.7vw, 4rem);
+  overflow-wrap: break-word;
+}
+
+.demo-copy p {
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.choice-group {
+  justify-content: center;
+}
+
+.simulator-panel {
+  width: 100%;
 }
 
 .choice-button.control {
@@ -589,6 +623,12 @@ h3 {
 .pitch-content {
   width: min(940px, 100%);
   text-align: center;
+}
+
+.outcome-card p,
+.pitch-content p {
+  margin-right: auto;
+  margin-left: auto;
 }
 
 .outcome-card {
