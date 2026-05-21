@@ -9,7 +9,7 @@ import PlayerController from './PlayerController'
 const hotspots = [
   { id: 'ai-governante', name: 'AI Governante', type: 'npc', position: [4, 1.4, -1], color: '#9ee8ff', model: '/models/player.glb' },
   { id: 'young-activist', name: 'Young Activist', type: 'npc', position: [-12, 1.4, -12], color: '#ff8fb7', model: '/models/player2.glb' },
-  { id: 'historical-elder', name: 'Tommaso Campanella', type: 'npc', position: [-13, 1.4, 0], color: '#f7c968', model: '/models/player3.glb' },
+  { id: 'tommaso-campanella', name: 'Tommaso Campanella', type: 'npc', position: [-13, 1.4, 0], color: '#f7c968', model: '/models/player3.glb' },
   { id: 'young-technologist', name: 'Young Technologist', type: 'npc', position: [-26, 1.4, -2], color: '#7df3c6', model: '/models/player4.glb' },
 ]
 
@@ -38,7 +38,7 @@ function Experience({ activeNpc, onNpcSelect, onPlayerPosition, onTerminalActiva
       onTerminalActivate()
       return
     }
-    onNpcSelect(hotspot.name)
+    onNpcSelect(hotspot)
   }
 
   useEffect(() => {
@@ -286,7 +286,7 @@ function MediterraneanGlow({ stats }) {
 function Hotspots({ activeNpc, focusedHotspotId, onActivate, registerHotspotRef }) {
   return hotspots.map((hotspot) => (
     <Hotspot
-      active={activeNpc === hotspot.name}
+      active={activeNpc === hotspot.id}
       focused={focusedHotspotId === hotspot.id}
       hotspot={hotspot}
       key={hotspot.id}
@@ -352,7 +352,7 @@ function Hotspot({ active, focused, hotspot, onActivate, registerRef }) {
         <ringGeometry args={[0.68, 0.74, 40]} />
         <meshStandardMaterial color={hotspot.color} emissive={hotspot.color} emissiveIntensity={near ? 1.6 : 0.9} transparent opacity={near ? 0.82 : 0.45} />
       </mesh>
-      <Html center distanceFactor={8} position={[0, 1.15, 0]}>
+      <Html center distanceFactor={8} position={[0.5, 0.5, 0]}>
         <div className={`world-label ${active || focused || near ? 'active' : ''}`}>
           {hotspot.name}
           <span>Premi E per comunicare</span>

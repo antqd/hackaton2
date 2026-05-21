@@ -9,11 +9,11 @@
     "@react-three/fiber": "^9.6.1",
     "@react-three/postprocessing": "^3.0.4",
     "@react-three/rapier": "^2.2.0",
-    "@vitejs/plugin-react": "latest",
+    "@vitejs/plugin-react": "^5.1.1",
     "postprocessing": "^6.39.1",
     "react": "latest",
     "react-dom": "latest",
     "three": "^0.184.0",
-    "vite": "latest"
+    "vite": "^7.2.4"
   }
 }
