@@ -34,12 +34,23 @@ body {
   margin: 0;
   min-width: 320px;
   overflow: hidden;
+  cursor: none;
 }
 
 button {
   border: 0;
   font: inherit;
   cursor: pointer;
+}
+
+.dialogue-backdrop,
+.dialogue-panel,
+.scenario-panel,
+.stats-panel,
+.debug-panel,
+.log-panel,
+button {
+  cursor: auto;
 }
 
 .simulator-shell {
@@ -113,6 +124,7 @@ button {
 
 .stats-panel,
 .scenario-panel,
+.debug-panel,
 .log-panel,
 .dialogue-panel {
   border: 1px solid var(--line);
@@ -124,6 +136,23 @@ button {
     0 0 40px rgba(98, 198, 255, 0.12),
     inset 0 0 24px rgba(98, 198, 255, 0.06);
   backdrop-filter: blur(18px);
+}
+
+.debug-panel {
+  position: absolute;
+  top: 300px;
+  right: 24px;
+  display: grid;
+  width: min(210px, calc(100vw - 48px));
+  gap: 6px;
+  padding: 14px;
+  color: #d8e9ff;
+  pointer-events: auto;
+}
+
+.debug-panel span {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 0.86rem;
 }
 
 .stats-panel {
@@ -187,6 +216,37 @@ button {
   pointer-events: auto;
 }
 
+.scenario-panel.collapsed {
+  width: min(430px, calc(100vw - 56px));
+  padding: 16px;
+}
+
+.scenario-panel.collapsed h2 {
+  font-size: 1.15rem;
+}
+
+.mission-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mission-head button {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid rgba(247, 201, 104, 0.38);
+  border-radius: 8px;
+  background: rgba(247, 201, 104, 0.1);
+  color: #ffe7a6;
+  font-weight: 900;
+}
+
+.mission-collapsed-copy {
+  margin: 10px 0 0;
+}
+
 .scenario-panel h2,
 .dialogue-panel h2 {
   margin: 0;
@@ -247,6 +307,27 @@ button {
   color: var(--muted);
   font-size: 0.82rem;
   line-height: 1.4;
+}
+
+.decision-preview {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.decision-preview small {
+  color: #d8e5f8;
+  font-size: 0.72rem;
+}
+
+.decision-preview .positive {
+  color: #9ff0c8;
+}
+
+.decision-preview .negative {
+  color: #ff9aaa;
 }
 
 .log-panel {
@@ -338,6 +419,15 @@ button {
   user-select: none;
 }
 
+.world-label span {
+  display: block;
+  margin-top: 3px;
+  color: #ffe9a8;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
 .world-label.active {
   border-color: rgba(247, 201, 104, 0.8);
   color: #fff4c6;
@@ -356,6 +446,13 @@ button {
   min-width: 118px;
   color: #ffe7a7;
   border-color: rgba(247, 201, 104, 0.52);
+}
+
+.world-label.loading-label {
+  min-width: 210px;
+  padding: 10px 14px;
+  color: #fff2c4;
+  border-color: rgba(247, 201, 104, 0.7);
 }
 
 @media (max-width: 900px) {

@@ -1,10 +1,26 @@
+import { useEffect, useState } from 'react'
+
 const statsConfig = [
   { key: 'happiness', label: 'Felicita', color: '#62c6ff' },
   { key: 'energy', label: 'Energia', color: '#f7c968' },
   { key: 'order', label: 'Ordine', color: '#7df3c6' },
 ]
 
-function HUD({ cityState, consequence, onDecision, scenario, signalLog, stats }) {
+function HUD({ cityState, consequence, onDecision, playerPosition, scenario, signalLog, stats }) {
+  const [missionOpen, setMissionOpen] = useState(false)
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key.toLowerCase() === 'q') {
+        document.exitPointerLock?.()
+        setMissionOpen((current) => !current)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
   return (
     <section className="hud-root">
       <div className="hud-scanline" />
@@ -12,8 +28,15 @@ function HUD({ cityState, consequence, onDecision, scenario, signalLog, stats })
       <header className="hud-title">
         <p>Protocollo Campanella 2100</p>
         <h1>Citta del Sole AI</h1>
-        <span>Click city to enter. WASD walk, mouse look, Shift sprint. Approach glowing citizens and hidden terminals.</span>
+        <span>Click city to enter first-person. WASD move, mouse look, Shift sprint. Walk to Simona and press E.</span>
       </header>
+
+      <aside className="debug-panel">
+        <p className="panel-kicker">Debug position</p>
+        <span>X {formatCoord(playerPosition.x)}</span>
+        <span>Y {formatCoord(playerPosition.y)}</span>
+        <span>Z {formatCoord(playerPosition.z)}</span>
+      </aside>
 
       <aside className="stats-panel">
         <div className="city-state">
@@ -36,19 +59,37 @@ function HUD({ cityState, consequence, onDecision, scenario, signalLog, stats })
         ))}
       </aside>
 
-      <article className="scenario-panel">
+      <article className={`scenario-panel ${missionOpen ? 'open' : 'collapsed'}`}>
         <p className="panel-kicker">Live ethical dilemma</p>
-        <h2>{scenario.title}</h2>
-        <p>{scenario.description}</p>
-        <div className="consequence">{consequence}</div>
-        <div className="decision-grid">
-          {scenario.decisions.map((decision) => (
-            <button key={decision.id} onClick={() => onDecision(decision)} type="button">
-              <strong>{decision.label}</strong>
-              <span>{decision.description}</span>
-            </button>
-          ))}
+        <div className="mission-head">
+          <h2>{scenario.title}</h2>
+          <button
+            onClick={() => {
+              document.exitPointerLock?.()
+              setMissionOpen((current) => !current)
+            }}
+            type="button"
+          >
+            {missionOpen ? 'Close Q' : 'Open Q'}
+          </button>
         </div>
+        {missionOpen ? (
+          <>
+            <p>{scenario.description}</p>
+            <div className="consequence">{consequence}</div>
+            <div className="decision-grid">
+              {scenario.decisions.map((decision) => (
+                <button key={decision.id} onClick={() => onDecision(decision)} type="button">
+                  <strong>{decision.label}</strong>
+                  <span>{decision.description}</span>
+                  <DecisionPreview decision={decision} stats={stats} />
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <p className="mission-collapsed-copy">Press Q to open mission choices.</p>
+        )}
       </article>
 
       <aside className="log-panel">
@@ -60,9 +101,35 @@ function HUD({ cityState, consequence, onDecision, scenario, signalLog, stats })
         </ul>
       </aside>
 
-      <div className="interaction-hint">WASD move • mouse look • Shift sprint • click NPCs / terminals</div>
+      <div className="interaction-hint">First-person mode • WASD move • mouse look • Shift sprint • E interact</div>
     </section>
   )
+}
+
+function DecisionPreview({ decision, stats }) {
+  return (
+    <div className="decision-preview">
+      {statsConfig.map((stat) => {
+        const nextValue = clamp(stats[stat.key] + decision.shift[stat.key])
+        const delta = nextValue - stats[stat.key]
+
+        return (
+          <small className={delta >= 0 ? 'positive' : 'negative'} key={stat.key}>
+            {stat.label}: {stats[stat.key]} → {nextValue} ({delta >= 0 ? '+' : ''}
+            {delta})
+          </small>
+        )
+      })}
+    </div>
+  )
+}
+
+function clamp(value) {
+  return Math.max(0, Math.min(100, Math.round(value)))
+}
+
+function formatCoord(value) {
+  return Number(value ?? 0).toFixed(2)
 }
 
 export default HUD

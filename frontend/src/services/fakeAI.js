@@ -178,6 +178,13 @@ const npcReplies = [
     consequence: 'La fiducia popolare aumenta, ma il controllo centrale perde precisione.',
     statShift: { happiness: 5, energy: -1, order: -3 },
   },
+  {
+    sender: 'Simona',
+    tone: 'guide',
+    text: 'Sono Simona. Questa citta sembra perfetta da lontano, ma ogni strada ha una scelta politica nascosta. Seguimi verso la piazza solare: Campanella AI sta parlando.',
+    consequence: 'Simona apre un percorso narrativo nella citta e aumenta curiosita sociale.',
+    statShift: { happiness: 4, energy: 0, order: -1 },
+  },
 ]
 
 const decisionConsequences = [

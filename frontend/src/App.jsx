@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import './App.css'
-import WorldScene from './components/WorldScene'
+import Experience from './components/Experience'
 import HUD from './components/HUD'
 import DialoguePanel from './components/DialoguePanel'
 import {
@@ -28,6 +28,7 @@ const npcProfiles = {
   Ecologist: 'Protects the living balance between city, food, water and energy.',
   'Energy Minister': 'Guardian of heliostatic towers, batteries and public power rights.',
   'Tourist AI Guide': 'Civic guide for travelers arriving from intelligent ports.',
+  Simona: 'Cittadina futuristica di Calabria 2100. Guida locale tra porto, piazza solare e archivio AI.',
 }
 
 function App() {
@@ -35,6 +36,7 @@ function App() {
   const [scenario, setScenario] = useState(scenarios[0])
   const [consequence, setConsequence] = useState(getOpeningMessage())
   const [selectedNpc, setSelectedNpc] = useState(null)
+  const [playerPosition, setPlayerPosition] = useState({ x: -14, y: 2.2, z: 2 })
   const [signalLog, setSignalLog] = useState([
     'Entering Calabria 2100. Solar city mesh synchronized.',
     'Campanella archive awake below central plaza.',
@@ -63,6 +65,7 @@ function App() {
   }
 
   function handleNpcSelect(npcName) {
+    document.exitPointerLock?.()
     const reply = createNpcReply(npcName, scenario, stats)
     const nextStats = clampStats({
       happiness: stats.happiness + reply.statShift.happiness,
@@ -94,10 +97,11 @@ function App() {
 
   return (
     <main className="simulator-shell">
-      <WorldScene
+      <Experience
         activeNpc={selectedNpc?.name}
         onNpcSelect={handleNpcSelect}
         onTerminalActivate={handleTerminalActivate}
+        onPlayerPosition={setPlayerPosition}
         onWorldEvent={handleWorldEvent}
         stats={stats}
       />
@@ -106,6 +110,7 @@ function App() {
         cityState={cityState}
         consequence={consequence}
         onDecision={handleDecision}
+        playerPosition={playerPosition}
         scenario={scenario}
         signalLog={signalLog}
         stats={stats}
