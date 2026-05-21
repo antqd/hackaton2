@@ -188,10 +188,34 @@ export function generateLocalNpcReply(npcId, stats = initialStats, context = {},
         "la riserva energetica richiede contenimento. Priorita suggerita: servizi essenziali, rete sanitaria e infrastrutture educative.",
       order:
         "l'ordine urbano e instabile. Posso aumentare la prevenzione, ma il costo previsto e una riduzione della fiducia civica."
+    },
+    "young-technologist": {
+      happiness:
+        "possiamo migliorare questa citta con strumenti piu trasparenti e veloci. L'innovazione deve farsi capire, non solo funzionare.",
+      energy:
+        "qui serve ottimizzazione seria: reti predittive, consumi adattivi e dati aperti. Ma nessun algoritmo deve scaricare il costo sui soliti quartieri.",
+      order:
+        "un po' di automazione puo prevenire caos, pero se nessuno controlla chi controlla il sistema, abbiamo solo spostato il problema."
+    },
+    "young-activist": {
+      happiness:
+        "le persone non stanno chiedendo miracoli tecnologici, stanno chiedendo ascolto. Senza dignita, il progresso diventa rumore.",
+      energy:
+        "anche in crisi, i diritti non si spengono come luci. La distribuzione deve proteggere persone reali, non solo grafici ordinati.",
+      order:
+        "se per ottenere ordine dobbiamo rinunciare alla liberta, allora non stiamo costruendo una citta: stiamo addestrando obbedienza."
+    },
+    "historical-elder": {
+      happiness:
+        "la memoria insegna che una comunita triste non dura, anche se ha torri splendenti. Prima guardiamo negli occhi chi resta indietro.",
+      energy:
+        "un tempo mancava il pane, ora manca corrente. Cambiano i nomi, ma la giustizia resta la stessa: nessuno deve essere lasciato al buio.",
+      order:
+        "i vecchi sanno che troppa paura sembra ordine solo per poco. La fiducia nasce piano, e si rompe in un attimo."
     }
   };
 
-  return `${memoryPrefix}${scenarioPrefix}${replies[npc.id]?.[pressure] ?? npc.exampleResponse}`;
+  return `${memoryPrefix}${scenarioPrefix}${getLocalReplyForPressure(replies[npc.id], pressure, npc.exampleResponse)}`;
 }
 
 export async function generateDynamicEvent({
@@ -386,6 +410,18 @@ function getMainPressure(stats) {
   return STAT_KEYS.map((key) => [key, stats[key] ?? initialStats[key] ?? 0]).sort((a, b) => a[1] - b[1])[0][0];
 }
 
+function getLocalReplyForPressure(replySet, pressure, fallback) {
+  if (!replySet) return fallback;
+
+  const pressureAliases = {
+    freedom: "order",
+    knowledge: "happiness",
+    trust: "happiness"
+  };
+
+  return replySet[pressure] ?? replySet[pressureAliases[pressure]] ?? replySet.happiness ?? fallback;
+}
+
 function sanitizeHistory(history = []) {
   return history
     .filter((message) => message?.role === "user" || message?.role === "assistant")
@@ -414,7 +450,13 @@ function buildNpcProfile(npcId) {
     "citizen-medic":
       "Vuole proteggere fragili e salute mentale. Teme sorveglianza travestita da cura. Cerca equilibrio tra prevenzione e dignita.",
     "ai-governante":
-      "Vuole ottimizzare stabilita sistemica. Teme collasso energetico e disordine. Non comprende sempre costo emotivo del controllo."
+      "Vuole ottimizzare stabilita sistemica. Teme collasso energetico e disordine. Non comprende sempre costo emotivo del controllo.",
+    "young-technologist":
+      "Vuole accelerare innovazione, servizi pubblici intelligenti e progresso condiviso. Teme che paura e burocrazia blocchino soluzioni utili. Sottovaluta talvolta rischi sociali dell'AI.",
+    "young-activist":
+      "Vuole difendere liberta, diritti e privacy. Teme che efficienza diventi controllo permanente. Legge ogni scelta dal punto di vista delle persone vulnerabili.",
+    "historical-elder":
+      "Vuole preservare memoria, relazioni umane e prudenza civile. Teme che Calabria2100 dimentichi la Calabria reale. Diffida del cambiamento imposto dall'alto."
   };
 
   return profiles[npcId] ?? "Cittadino di Calabria2100 con memoria civica e posizione autonoma.";

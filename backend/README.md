@@ -5,6 +5,7 @@ Backend minimale per il cervello narrativo di Calabria2100.
 Gestisce:
 
 - NPC e personalita
+- NPC storytelling: giovane tech, giovane attivista, memoria storica
 - scenari decisionali
 - eventi dinamici
 - statistiche citta: `happiness`, `energy`, `order`, `freedom`, `knowledge`, `trust`
@@ -133,6 +134,24 @@ NPC:
   exampleResponse: "..."
 }
 ```
+
+NPC disponibili:
+
+- `tommaso-campanella`: filosofo utopico
+- `ai-governante`: sistema centrale freddo e logico
+- `young-technologist`: giovane sviluppatore pro-AI
+- `young-activist`: studentessa critica e attivista
+- `historical-elder`: vecchio memoria storica
+- `citizen-worker`: tecnica dei distretti solari
+- `citizen-teacher`: maestro delle mura della conoscenza
+- `citizen-medic`: medica civica
+
+NPC consigliati da mostrare nel mondo 3D:
+
+- principali sempre visibili: `ai-governante`, `tommaso-campanella`, `young-technologist`, `young-activist`, `historical-elder`
+- secondari per scenari specifici: `citizen-worker`, `citizen-teacher`, `citizen-medic`
+
+Il backend espone tutti gli NPC. Il frontend puo filtrare i 5 principali per non affollare la scena.
 
 Scenario/evento:
 
@@ -317,10 +336,10 @@ Response:
 Frontend:
 
 ```js
-async function generateEvent(stats) {
+async function generateEvent(stats, history) {
   const { event } = await api("/api/event", {
     method: "POST",
-    body: JSON.stringify({ stats })
+    body: JSON.stringify({ stats, history })
   });
 
   setCurrentScenario(event);
@@ -371,6 +390,19 @@ Response:
 - `local`: nessuna API key, fallback locale
 - `openai`: risposta OpenAI
 - `local-fallback`: OpenAI fallita, fallback locale
+
+Con `OPENAI_API_KEY`, `reply` arriva dal modello. Senza key, `reply` arriva dal fallback locale ma mantiene stesso formato.
+
+`history` deve contenere solo messaggi recenti della chat con quell'NPC:
+
+```js
+[
+  { role: "user", content: "Proteggiamo la privacy." },
+  { role: "assistant", content: "La fiducia civica sale, ma l'ordine cala." }
+]
+```
+
+Il backend accetta solo ruoli `user` e `assistant`, taglia la cronologia agli ultimi 8 messaggi e ignora ruoli non validi.
 
 Frontend:
 
@@ -455,6 +487,7 @@ export function useCalabriaAi() {
   const [stats, setStats] = useState(null);
   const [npcs, setNpcs] = useState([]);
   const [scenarios, setScenarios] = useState([]);
+  const [historyByNpc, setHistoryByNpc] = useState({});
 
   useEffect(() => {
     api("/api/state").then((data) => {
@@ -474,21 +507,42 @@ export function useCalabriaAi() {
   }
 
   async function chat(npcId, message, scenarioTitle) {
-    return api("/api/chat", {
+    const history = historyByNpc[npcId] ?? [];
+    const result = await api("/api/chat", {
       method: "POST",
       body: JSON.stringify({
         npcId,
         message,
         stats,
         context: { scenarioTitle },
-        history: []
+        history
       })
     });
+
+    setHistoryByNpc((current) => ({
+      ...current,
+      [npcId]: [
+        ...history,
+        { role: "user", content: message },
+        { role: "assistant", content: result.reply }
+      ].slice(-8)
+    }));
+
+    return result;
   }
 
   return { stats, npcs, scenarios, applyChoice, chat };
 }
 ```
+
+## Contratto frontend rapido
+
+- Usare `GET /api/state` all'avvio.
+- Tenere `stats` nello stato React e mandarlo a `/api/choice`, `/api/event`, `/api/chat`.
+- Tenere `historyByNpc[npcId]` nel frontend; il backend non salva sessioni.
+- Mostrare `result.provider` solo in debug, non nella UI finale.
+- Usare `result.narrative` dopo una scelta per log/overlay narrativo.
+- Usare `event.npcId` per aprire automaticamente dialogo con NPC legato all'evento.
 
 ## Test
 

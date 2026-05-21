@@ -6,13 +6,17 @@ import {
   applyDecision,
   buildNpcMessages,
   generateDynamicEvent,
+  generateLocalNpcReply,
   generateNpcReply,
   getRandomEvent,
   validateGeneratedEvent
 } from "../src/aiEngine.js";
 
 test("NPC data supports chat personas", () => {
-  assert.equal(npcs.length, 5);
+  assert.equal(npcs.length, 8);
+  assert.ok(npcs.some((npc) => npc.id === "young-technologist"));
+  assert.ok(npcs.some((npc) => npc.id === "young-activist"));
+  assert.ok(npcs.some((npc) => npc.id === "historical-elder"));
 
   for (const npc of npcs) {
     assert.ok(npc.id);
@@ -22,6 +26,26 @@ test("NPC data supports chat personas", () => {
     assert.ok(npc.systemPrompt);
     assert.ok(npc.exampleResponse);
   }
+});
+
+test("storytelling NPCs have distinct prompt profiles and local voices", () => {
+  const techMessages = buildNpcMessages(
+    "young-technologist",
+    "Dobbiamo fidarci dell'AI?",
+    initialStats
+  );
+  const activistReply = generateLocalNpcReply("young-activist", {
+    ...initialStats,
+    freedom: 20
+  });
+  const elderReply = generateLocalNpcReply("historical-elder", {
+    ...initialStats,
+    trust: 20
+  });
+
+  assert.match(techMessages[0].content, /innovazione/);
+  assert.match(activistReply, /liberta|diritti|persone/i);
+  assert.match(elderReply, /memoria|fiducia|vecchi/i);
 });
 
 test("scenarios expose two playable choices", () => {
