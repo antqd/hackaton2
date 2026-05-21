@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Città del Sole AI Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&family=Orbitron:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+  <div class="city-grid"></div>
+
+  <header class="topbar" aria-label="Navigazione presentazione">
+    <a class="brand" href="#hero" aria-label="Torna all'inizio">
+      <span class="brand-mark"></span>
+      <span>Città del Sole AI</span>
+    </a>
+    <nav>
+      <a href="#concept">Concept</a>
+      <a href="#demo">Demo</a>
+      <a href="#pitch">Pitch</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="hero" class="section hero">
+      <div class="hero-content reveal">
+        <p class="eyebrow">Hackathon demo experience</p>
+        <h1>Città del Sole AI</h1>
+        <p class="hero-subtitle">Una società governata da AI. Tu decidi il futuro.</p>
+        <div class="hero-actions">
+          <button class="primary-button" id="startExperience" type="button">
+            Inizia esperienza
+            <span aria-hidden="true">→</span>
+          </button>
+          <a class="ghost-button" href="#concept">Guarda il concept</a>
+        </div>
+      </div>
+
+      <div class="hero-visual reveal" aria-label="Vista simulata della città AI">
+        <div class="scene-shell">
+          <canvas id="sunScene" aria-label="Sole AI 3D interattivo"></canvas>
+          <div class="sun-fallback" aria-hidden="true"></div>
+        </div>
+        <div class="city-silhouette">
+          <i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+        <div class="signal-card signal-a">
+          <strong>AI Council</strong>
+          <span>stato: attivo</span>
+        </div>
+        <div class="signal-card signal-b">
+          <strong>Energia</strong>
+          <span>rete condivisa</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="concept" class="section concept">
+      <div class="section-heading reveal">
+        <p class="eyebrow">Il dilemma</p>
+        <h2>Una città perfetta non nasce gratis.</h2>
+        <p>Tre forze si bilanciano in tempo reale. Ogni scelta cambia il contratto tra persone, risorse e governo algoritmico.</p>
+      </div>
+
+      <div class="concept-grid">
+        <article class="concept-card reveal">
+          <div class="icon-shell">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3l7 4v5c0 4.4-2.8 7.4-7 9-4.2-1.6-7-4.6-7-9V7l7-4z"/>
+              <path d="M9 12l2 2 4-5"/>
+            </svg>
+          </div>
+          <h3>Libertà vs Sicurezza</h3>
+          <p>Il controllo riduce il rischio, ma misura ogni gesto. La fiducia libera la città, ma apre spazio al disordine.</p>
+        </article>
+
+        <article class="concept-card reveal">
+          <div class="icon-shell">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M13 2L4 14h7l-1 8 10-13h-7l1-7z"/>
+            </svg>
+          </div>
+          <h3>Energia condivisa</h3>
+          <p>La rete redistribuisce energia tra quartieri, priorità civiche e bisogni individuali.</p>
+        </article>
+
+        <article class="concept-card reveal">
+          <div class="icon-shell">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="4" y="5" width="16" height="13" rx="3"/>
+              <path d="M8 9h.01M16 9h.01M9 14c1.4 1 4.6 1 6 0"/>
+              <path d="M12 2v3M7 21h10"/>
+            </svg>
+          </div>
+          <h3>Governo AI</h3>
+          <p>L'AI propone leggi e previsioni. Il pubblico sceglie quanto potere delegare alla macchina.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="demo" class="section demo">
+      <div class="demo-layout">
+        <div class="demo-copy reveal">
+          <p class="eyebrow">Demo interattiva</p>
+          <h2>Sorveglianza Totale</h2>
+          <p>L'AI propone controllo totale per eliminare il crimine.</p>
+          <div class="choice-group" aria-label="Scelte scenario">
+            <button class="choice-button control" data-choice="control" type="button">Aumenta controllo</button>
+            <button class="choice-button freedom" data-choice="freedom" type="button">Proteggi libertà</button>
+          </div>
+        </div>
+
+        <div class="simulator-panel reveal" aria-live="polite">
+          <div class="panel-header">
+            <span class="status-dot"></span>
+            <span>Simulatore civico</span>
+            <strong id="scenarioState">Scenario iniziale</strong>
+          </div>
+
+          <div class="stat-list">
+            <div class="stat-row">
+              <div>
+                <span>Felicità</span>
+                <strong><span class="stat-number" data-stat="happiness">68</span>%</strong>
+              </div>
+              <div class="meter"><span data-meter="happiness"></span></div>
+            </div>
+
+            <div class="stat-row">
+              <div>
+                <span>Energia</span>
+                <strong><span class="stat-number" data-stat="energy">71</span>%</strong>
+              </div>
+              <div class="meter"><span data-meter="energy"></span></div>
+            </div>
+
+            <div class="stat-row">
+              <div>
+                <span>Ordine</span>
+                <strong><span class="stat-number" data-stat="order">54</span>%</strong>
+              </div>
+              <div class="meter"><span data-meter="order"></span></div>
+            </div>
+          </div>
+
+          <div class="ai-response">
+            <span>Risposta AI</span>
+            <p id="aiResponse">In attesa della tua decisione. Il Consiglio AI sta simulando 14.204 futuri possibili.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="outcome" class="section outcome">
+      <div class="outcome-card reveal">
+        <p class="eyebrow">Cosa succede</p>
+        <h2 id="outcomeText">La città aspetta il tuo primo decreto.</h2>
+        <p id="outcomeDetail">Scegli una politica nella demo e guarda il prezzo sociale emergere davanti alla giuria.</p>
+      </div>
+    </section>
+
+    <section id="pitch" class="section pitch">
+      <div class="pitch-content reveal">
+        <p class="eyebrow">Pitch finale</p>
+        <h2>Ogni utopia ha un prezzo</h2>
+        <p>Abbiamo trasformato la visione di Campanella in un simulatore AI dove ogni scelta ha conseguenze reali.</p>
+        <a class="primary-button" href="#demo">
+          Sei pronto a governare?
+          <span aria-hidden="true">→</span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
